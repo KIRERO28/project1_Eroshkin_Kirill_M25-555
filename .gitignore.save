@@ -1,0 +1,13 @@
+# Python virtual environment (Poetry in-project)
+.venv/
+
+# Build artifacts
+dist/
+build/
+*.egg-info/
+# Виртуальная среда
+.venv/
+
+# Артефакты сборки
+dist/
+build/
