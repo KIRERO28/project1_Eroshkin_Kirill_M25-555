@@ -1,46 +1,95 @@
 # labyrinth_game/player_actions.py
-"""
-Функции, отвечающие за действия игрока.
-"""
-from typing import Any
 
 from .constants import ROOMS
-from .utils import normalize_direction
+from .utils import describe_current_room, random_event
 
 
-def move_player(state: dict[str, Any], direction: str) -> str:
-    """Пробует переместить игрока в указанном направлении."""
-    direction = normalize_direction(direction)
-    current_room = state["current_room"]
-
-    if direction in ROOMS[current_room]["exits"]:
-        next_room = ROOMS[current_room]["exits"][direction]
-        state["current_room"] = next_room
-        state["steps_taken"] += 1
-        return f"Вы переместились в комнат
-у: {next_room}"
-    return "Нельзя идти туда."
+def get_input(prompt: str = "> ") -> str:
+    """Безопасно запросить ввод у пользователя."""
+    try:
+        return input(prompt)
+    except (KeyboardInterrupt, EOFError):
+        print("\nВыход из игры.")
+        return "quit"
 
 
-def take_item(state: dict[str, Any], item: str) -> str:
-    """Поднять предмет из текущей комнаты."""
-    room = ROOMS[state["current_room"]]
-    if item in room["items"]:
-        room["items"].remove(item)
-        state["player_inventory"].append(item)
-        return f"Вы подобрали {item}."
-    return "Здесь нет такого предмета."
+def show_inventory(game_state: dict) -> None:
+    """Показать содержимое инвентаря игрока."""
+    inventory = game_state["player_inventory"]
+    if not inventory:
+        print("Ваш инвентарь пуст.")
+        return
+
+    print("В вашем инвентаре:")
+    for item in inventory:
+        print(f"  - {item}")
 
 
-def solve_puzzle(state: dict[str, Any], answer: str) -> str:
-    """Проверить ответ игрока на загадку."""
-    room = ROOMS[state["current_room"]]
-    if room["puzzle"] is None:
-        return "В этой комнате нет загадок."
+def move_player(game_state: dict, direction: str) -> None:
+    """Переместить игрока в указанном направлении, если это возможно."""
+    room_name = game_state["current_room"]
+    room = ROOMS[room_name]
+    exits = room.get("exits", {})
 
-    question, correct_answer = room["puzzle"]
-    if answer.strip().lower() == correct_answer.strip().lower():
-        room["puzzle"] = None  # Считаем загадку решённой
-        return "Загадка решена!"
-    return "Неверный ответ."
+    if direction not in exits:
+        print("Нельзя пойти в этом направлении.")
+        return
+
+    new_room = exits[direction]
+
+    if new_room == "treasure_room":
+        inventory = game_state["player_inventory"]
+        if "rusty_key" in inventory:
+            print(
+                "Вы используете найденный ключ, чтобы открыть путь "
+                "в комнату сокровищ."
+            )
+        else:
+            print("Дверь заперта. Нужен ключ, чтобы пройти дальше.")
+            return
+
+    game_state["current_room"] = new_room
+    game_state["steps_taken"] += 1
+    describe_current_room(game_state)
+    random_event(game_state)
+
+
+def take_item(game_state: dict, item_name: str) -> None:
+    """Попытаться поднять предмет из текущей комнаты."""
+    if item_name == "treasure_chest":
+        print("Вы не можете поднять сундук, он слишком тяжелый.")
+        return
+
+    room_name = game_state["current_room"]
+    room = ROOMS[room_name]
+    items = room.get("items", [])
+
+    if item_name in items:
+        items.remove(item_name)
+        game_state["player_inventory"].append(item_name)
+        print(f"Вы подняли: {item_name}")
+    else:
+        print("Такого предмета здесь нет.")
+
+
+def use_item(game_state: dict, item_name: str) -> None:
+    """Использовать предмет из инвентаря игрока."""
+    inventory = game_state["player_inventory"]
+
+    if item_name not in inventory:
+        print("У вас нет такого предмета.")
+        return
+
+    if item_name == "torch":
+        print("Вы поднимаете факел, и вокруг становится гораздо светлее.")
+    elif item_name == "sword":
+        print("Вы сжимаете меч в руке и чувствуете уверенность.")
+    elif item_name == "bronze_box":
+        if "rusty_key" in inventory:
+            print("Вы открываете бронзовую шкатулку, но внутри уже пусто.")
+        else:
+            print("Вы открываете бронзовую шкатулку и находите внутри ржавый ключ.")
+            inventory.append("rusty_key")
+    else:
+        print("Вы не знаете, как использовать этот предмет.")
 

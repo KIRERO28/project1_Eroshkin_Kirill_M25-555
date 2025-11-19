@@ -4,3 +4,10 @@
 # Артефакты сборки
 dist/
 build/
+.ruff_cache/
+
+# Python
+__pycache__/
+*.pyc
+
+
