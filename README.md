@@ -11,5 +11,5 @@ make install
 
 ## Демонстрация (asciinema)
 
-[![asciinema demo](https://asciinema.org/a/tWTfFM8XTn4GFBgaBX8qLVzPc.svg)](https://asciinema.org/a/tWTfFM8XTn4GFBgaBX8qLVzPc)
+[![asciinema demo](https://asciinema.org/a/EZjA4jPWuHzUNbIK)](https://asciinema.org/a/EZjA4jPWuHzUNbIK)
 
